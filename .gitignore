@@ -1,0 +1,20 @@
+# Data & artefacts
+data/
+runs/
+outputs/
+*.pt
+!yolov8n.pt.placeholder
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+*.egg-info/
+.pytest_cache/
+
+# IDE / OS
+.vscode/
+.idea/
+Thumbs.db
+.DS_Store

@@ -1,0 +1,31 @@
+# Cấu hình mặc định — tối ưu cho máy CPU-only.
+# Ghi đè bất kỳ giá trị nào bằng cờ dòng lệnh, ví dụ:
+#   python -m cvdet.train --epochs 20 --imgsz 512
+
+model:
+  # Model nhỏ nhất của họ YOLOv8 (~3.2M tham số) — lựa chọn hợp lý cho CPU.
+  # Đổi sang yolov8s.pt nếu bạn chuyển sang máy có GPU.
+  weights: yolov8n.pt
+
+data:
+  # Ultralytics tự tải dataset công khai này (128 ảnh COCO, 80 lớp).
+  # Dùng để chạy thử end-to-end trong vài phút trên CPU.
+  # Dataset lớn hơn: coco8.yaml (8 ảnh, nhanh nhất), VOC.yaml, coco.yaml (rất nặng).
+  dataset: coco128.yaml
+
+train:
+  epochs: 10
+  # Ảnh nhỏ hơn 640 mặc định để giảm mạnh thời gian train trên CPU.
+  imgsz: 416
+  batch: 4
+  workers: 2
+  device: auto        # auto | cpu | 0 | 0,1
+  patience: 20        # early stopping: số epoch không cải thiện thì dừng
+  seed: 42
+  project: runs
+  name: yolov8n-coco128
+
+predict:
+  conf: 0.25          # ngưỡng confidence tối thiểu
+  iou: 0.45           # ngưỡng IoU cho NMS
+  max_det: 100
