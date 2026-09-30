@@ -5,7 +5,15 @@ from __future__ import annotations
 import argparse
 import time
 
-from .config import Config, add_common_args, apply_overrides, load_config, resolve_device
+from .config import (
+    Config,
+    add_common_args,
+    apply_overrides,
+    configure_ultralytics_dirs,
+    load_config,
+    resolve_device,
+)
+from .console import setup_console
 
 
 def train(cfg: Config) -> str:
@@ -13,6 +21,7 @@ def train(cfg: Config) -> str:
     from ultralytics import YOLO
 
     device = resolve_device(cfg.train.device)
+    configure_ultralytics_dirs(cfg)
 
     print("=" * 60)
     print(f"  Model    : {cfg.model.weights}")
@@ -55,6 +64,7 @@ def train(cfg: Config) -> str:
 
 
 def main() -> int:
+    setup_console()
     parser = argparse.ArgumentParser(description="Train model object detection")
     add_common_args(parser)
     parser.add_argument("--epochs", type=int, default=None)

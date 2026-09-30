@@ -34,11 +34,13 @@ class FakeDetector:
 
 @pytest.fixture
 def client(monkeypatch):
-    """TestClient bỏ qua lifespan để không phải tải weights thật."""
-    monkeypatch.setitem(api_main._state, "detector", FakeDetector())
+    """TestClient với detector giả.
+
+    Phải thay `detector_from_config` TRƯỚC khi vào context: TestClient chạy lifespan,
+    và lifespan thật sẽ gọi YOLO() -> tải yolov8n.pt từ internet, làm test treo.
+    """
+    monkeypatch.setattr(api_main, "detector_from_config", lambda cfg: FakeDetector())
     with TestClient(api_main.app) as c:
-        # TestClient chạy lifespan và ghi đè detector — set lại sau khi vào context.
-        monkeypatch.setitem(api_main._state, "detector", FakeDetector())
         yield c
 
 

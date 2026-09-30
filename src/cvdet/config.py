@@ -22,6 +22,8 @@ class ModelConfig:
 @dataclass
 class DataConfig:
     dataset: str = "coco128.yaml"
+    # Thư mục chứa dataset tải về, tương đối với gốc project.
+    root: str = "data"
 
 
 @dataclass
@@ -105,6 +107,52 @@ def resolve_device(device: str = "auto") -> str:
     if getattr(torch.backends, "mps", None) is not None and torch.backends.mps.is_available():
         return "mps"
     return "cpu"
+
+
+def configure_ultralytics_dirs(cfg: Config) -> Path:
+    """Buộc Ultralytics tải dataset/weights vào trong project.
+
+    Mặc định nó dùng `Path.home()/datasets`, nhưng dưới Git Bash trên Windows home
+    có thể resolve thành `C:/Users` — thư mục không có quyền ghi, làm train fail.
+    Ghim đường dẫn vào <project>/data cũng giúp dataset đi cùng project.
+
+    Lưu ý: `settings.update` ghi vào file cấu hình chung của Ultralytics, nên thay
+    đổi này có tác dụng ngoài phạm vi project.
+    """
+    from ultralytics import settings
+
+    data_dir = (PROJECT_ROOT / cfg.data.root).resolve()
+    weights_dir = data_dir / "weights"
+    for path in (data_dir, weights_dir):
+        path.mkdir(parents=True, exist_ok=True)
+
+    updates = {}
+    if settings.get("datasets_dir") != str(data_dir):
+        updates["datasets_dir"] = str(data_dir)
+    if settings.get("weights_dir") != str(weights_dir):
+        updates["weights_dir"] = str(weights_dir)
+    if updates:
+        settings.update(updates)
+        # settings.update chỉ ghi ra file; các module Ultralytics đã import xong thì
+        # vẫn giữ hằng số cũ (`from ultralytics.utils import DATASETS_DIR`). Không
+        # gán đè thì lần chạy ĐẦU TIÊN trên máy mới vẫn dùng đường dẫn cũ, chỉ từ
+        # lần thứ hai mới đúng.
+        _rebind_ultralytics_constants(data_dir, weights_dir)
+
+    return data_dir
+
+
+def _rebind_ultralytics_constants(data_dir: Path, weights_dir: Path) -> None:
+    """Gán lại DATASETS_DIR / WEIGHTS_DIR trên mọi module ultralytics đã import."""
+    import sys
+
+    for name, module in list(sys.modules.items()):
+        if not name.startswith("ultralytics"):
+            continue
+        if getattr(module, "DATASETS_DIR", None) is not None:
+            module.DATASETS_DIR = data_dir
+        if getattr(module, "WEIGHTS_DIR", None) is not None:
+            module.WEIGHTS_DIR = weights_dir
 
 
 def apply_overrides(cfg: Config, args: argparse.Namespace) -> Config:

@@ -12,6 +12,8 @@ data:
   # Dùng để chạy thử end-to-end trong vài phút trên CPU.
   # Dataset lớn hơn: coco8.yaml (8 ảnh, nhanh nhất), VOC.yaml, coco.yaml (rất nặng).
   dataset: coco128.yaml
+  # Dataset tải về đây (tương đối với gốc project); thư mục này đã gitignore.
+  root: data
 
 train:
   epochs: 10

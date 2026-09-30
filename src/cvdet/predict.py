@@ -16,6 +16,7 @@ from typing import Any, Sequence
 import numpy as np
 
 from .config import Config, add_common_args, apply_overrides, load_config, resolve_device
+from .console import setup_console
 
 
 @dataclass(frozen=True)
@@ -158,12 +159,14 @@ def detector_from_config(cfg: Config) -> Detector:
 
 
 def main() -> int:
+    setup_console()
     parser = argparse.ArgumentParser(description="Chạy object detection trên ảnh")
     add_common_args(parser)
     parser.add_argument("source", type=str, help="Đường dẫn ảnh, thư mục ảnh, hoặc URL")
     parser.add_argument("--conf", type=float, default=None, help="Ngưỡng confidence")
     parser.add_argument("--iou", type=float, default=None, help="Ngưỡng IoU cho NMS")
     parser.add_argument("--max-det", dest="max_det", type=int, default=None)
+    parser.add_argument("--name", type=str, default=None, help="Tên lần chạy (thư mục runs/) để lấy best.pt")
     parser.add_argument(
         "--save", type=Path, default=None, help="Lưu ảnh đã vẽ box vào đường dẫn này"
     )

@@ -7,7 +7,15 @@ import json
 from pathlib import Path
 from typing import Any
 
-from .config import Config, add_common_args, apply_overrides, load_config, resolve_device
+from .config import (
+    Config,
+    add_common_args,
+    apply_overrides,
+    configure_ultralytics_dirs,
+    load_config,
+    resolve_device,
+)
+from .console import setup_console
 
 
 def evaluate(cfg: Config, weights: Path | None = None) -> dict[str, Any]:
@@ -24,6 +32,7 @@ def evaluate(cfg: Config, weights: Path | None = None) -> dict[str, Any]:
         )
 
     device = resolve_device(cfg.train.device)
+    configure_ultralytics_dirs(cfg)
     model = YOLO(str(weights))
 
     metrics = model.val(
@@ -32,6 +41,11 @@ def evaluate(cfg: Config, weights: Path | None = None) -> dict[str, Any]:
         batch=cfg.train.batch,
         device=device,
         verbose=False,
+        # Không truyền project/name thì Ultralytics ghi vào ~/runs/detect/val,
+        # tức là ra ngoài project. Giữ mọi kết quả cạnh lần train tương ứng.
+        project=str(cfg.run_dir.parent),
+        name=f"{cfg.train.name}-val",
+        exist_ok=True,
     )
 
     box = metrics.box
@@ -57,9 +71,11 @@ def evaluate(cfg: Config, weights: Path | None = None) -> dict[str, Any]:
 
 
 def main() -> int:
+    setup_console()
     parser = argparse.ArgumentParser(description="Đánh giá model object detection")
     add_common_args(parser)
     parser.add_argument("--batch", type=int, default=None)
+    parser.add_argument("--name", type=str, default=None, help="Tên lần chạy (thư mục runs/) để lấy best.pt")
     parser.add_argument(
         "--out", type=Path, default=None, help="Ghi kết quả ra file JSON"
     )

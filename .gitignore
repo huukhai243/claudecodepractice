@@ -18,3 +18,9 @@ venv/
 .idea/
 Thumbs.db
 .DS_Store
+
+# Ket qua chay thu
+outputs/
+
+# File tai do cua Ultralytics
+*.part

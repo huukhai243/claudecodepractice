@@ -11,6 +11,16 @@ import shutil
 import sys
 from pathlib import Path
 
+# check_env.py phải chạy được trước khi cài package, nên không import cvdet.console
+# mà lặp lại logic UTF-8 ở đây (console Windows mặc định là cp1252).
+for _stream in (sys.stdout, sys.stderr):
+    _reconfigure = getattr(_stream, "reconfigure", None)
+    if _reconfigure is not None:
+        try:
+            _reconfigure(encoding="utf-8", errors="replace")
+        except (ValueError, OSError):
+            pass
+
 REQUIRED = ["torch", "torchvision", "ultralytics", "numpy", "PIL", "yaml"]
 OPTIONAL = ["fastapi", "uvicorn", "cv2", "pytest"]
 
